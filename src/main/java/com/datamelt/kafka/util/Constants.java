@@ -117,8 +117,8 @@ public class Constants
     public static final int RULEENGINE_OUTPUT_MODE_PASSED_GROUPS					= 1;
     public static final int RULEENGINE_OUTPUT_MODE_FAILED_GROUPS					= 2;
     
-    public static final String VERSION_NUMBER								 		= "0.7.4";
-    public static final String LAST_UPDATE									 		= "2019-05-09";
+    public static final String VERSION_NUMBER								 		= "0.8.1";
+    public static final String LAST_UPDATE									 		= "2019-05-12";
 	
 
 

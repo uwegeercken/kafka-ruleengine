@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.avro.Schema;
+import org.apache.avro.Schema; 
 import org.apache.avro.Schema.Parser;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.Logger;
@@ -53,7 +53,7 @@ import com.datamelt.util.RowFieldCollection;
  * deserializer/serializer in the configuration for the kafka consumer and producer. 
  * 
  * 
- * @author uwe geercken - 2019-05-09
+ * @author uwe geercken - 2019-05-12
  *
  */
 public class KafkaRuleEngine
