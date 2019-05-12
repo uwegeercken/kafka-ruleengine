@@ -504,10 +504,10 @@ public class RuleEngineConsumerProducer implements Runnable
 	 * there are several fields added to the output message which are details of the execution of the ruleengine and rules.
 	 * E.g. if the group, subgroup or rule failed, the rule message and the logical operators of the subgroups and rules.
 	 * 
-	 * @param kafkaProducer		producer used for the logging topic
-	 * @param recordKey			key of the kafka source message
-	 * @param message			the kafka source message
-	 * @param ruleEngine		reference to the ruleengine instance
+	 * @param kafkaProducerLogging		producer used for the logging topic
+	 * @param recordKey					key of the kafka source message
+	 * @param message					the kafka source message
+	 * @param ruleGroups				reference to the rulegroups of the ruleengine instance
 	 */
 	private void sendLoggingTargetTopicMessage(KafkaProducer<String, Object> kafkaProducerLogging, String recordKey, Object message, ArrayList<RuleGroup> ruleGroups)
 	{

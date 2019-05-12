@@ -311,8 +311,8 @@ public class KafkaRuleEngine
 	/**
 	 * Loads the properties from the given file
 	 * 
-	 * @param filename		the path and name of the properties file
-	 * @return				Properties object
+	 * @param propertiesFilename		the path and name of the properties file
+	 * @return							Properties object
 	 */
 	private static Properties loadProperties(String propertiesFilename) 
     {
@@ -361,7 +361,8 @@ public class KafkaRuleEngine
 	 * An attempt is made to retrieve a list of topics. If this fails
 	 * then it is assumed that the broker(s) is (are) not available
 	 * 
-	 * @return		boolean indicator if the consumer can list topics
+	 * @param kafkaConsumerProperties	the path and name of the properties file
+	 * @return		boolean 			indicator if the consumer can list topics
 	 */
 	private static boolean consumerCanListTopics(Properties kafkaConsumerProperties)
 	{
@@ -469,8 +470,8 @@ public class KafkaRuleEngine
 	 * 
 	 * @param fieldType		the data type of the reference field 
 	 * @return				the default value for the relevant data type
-	 */
-	private static Object setDefaultValue(long fieldType) throws Exception
+	 * @throws Exception	exception if the field taype is invalid
+	 */	private static Object setDefaultValue(long fieldType) throws Exception
 	{
 		if(fieldType == ReferenceField.FIELD_TYPE_ID_STRING)
 		{
@@ -832,8 +833,9 @@ public class KafkaRuleEngine
 	 * 
 	 * it is assumed that the name of the topic in the schema registry is the same as the topic name
 	 * 
-	 * @param topic		the path and name of the avro schema file
-	 * @return			avro schema
+	 * @param topic				the path and name of the avro schema file
+	 * @param schemaText		avro schema text
+	 * @return					avro schema
 	 */
 	private static Schema parseRegistryAvroSchema(String topic, String schemaText)
 	{
