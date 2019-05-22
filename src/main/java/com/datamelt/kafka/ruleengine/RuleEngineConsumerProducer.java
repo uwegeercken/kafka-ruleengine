@@ -192,6 +192,8 @@ public class RuleEngineConsumerProducer implements Runnable
 			long lastRecordTime = 0;
 			long lastOffset = 0;
 			
+			Duration timeout = Duration.ofMillis(kafkaConsumerPoll);
+			
 			// process while we receive messages 
 			while (true && keepRunning) 
 	        {
@@ -243,7 +245,6 @@ public class RuleEngineConsumerProducer implements Runnable
 				if(!errorReloadingProjectZipFile)
 				{
 					// poll records from kafka
-					Duration timeout = Duration.ofMillis(kafkaConsumerPoll);
 					records = kafkaConsumer.poll(timeout);
 					
 					// loop over the records/messages
@@ -280,92 +281,101 @@ public class RuleEngineConsumerProducer implements Runnable
 							}
 							
 							// add fields that have been additionally defined in the ruleengine project file
-							// these are fields that are not present in the message but used by the rule engine
-							KafkaRuleEngine.addReferenceFields(ruleEngine.getReferenceFields(), collection);
+							// these are fields that are not (potentially) present in the message but used by the rule engine
+							boolean fieldsOk = KafkaRuleEngine.addReferenceFields(ruleEngine.getReferenceFields(), collection);
 						
-							// label for the ruleengine. used for assigning a unique label to each record
-							// this is useful when outputting the detailed results.
-							String label = KafkaRuleEngine.getLabel(record.key(), counter);
-							
-							// run the ruleengine to apply logic and execute actions
-							ruleEngine.run(label, collection);
-
-							// if a field to count on is defined increase counter if the field value has not changed
-							// or otherwise reset counter
-							if(fieldNameToCountOn!=null)
+							// run ruleengine ONLY if the fields have been processed correctly.
+							// if not, this would indicate that the messages have varying fields.
+							if(fieldsOk == false)
 							{
-								counterFieldnameCurrentValue = collection.getFieldValue(fieldNameToCountOn).toString();
-								increaseCounterFieldname(counterFieldnameCurrentValue);
-							}
-							
-							// write value of the field to count on, the counter and the kafka offset to the log
-							if(fieldNameToCountOn!=null && counter % fieldNameToCountOnLoggingInterval == 0)
-							{
-								logger.info(Constants.LOG_LEVEL_SUBTYPE_METRICS + "source_topic=" + kafkaTopicSource + " target_topic=" + kafkaTopicTarget + " field=" + fieldNameToCountOn + " field_value=" + counterFieldnameValue + " counter=" + counterFieldname + " offset=" + lastOffset);
-								fieldNameCounterWrittenToLog = true;
+								throw new Exception("the fields of the message could not be correctly processed");
 							}
 							else
 							{
-								// indicator that the counter value was not written to the log yet
-								fieldNameCounterWrittenToLog = false;
-							}
-							
-							// check if according to the settings the message has a ruleengine 
-							// status of failed
-							boolean failedMessage = false;
-							
-							// depending on the selected mode (PROPERTY_RULEENGINE_FAILED_MODE), the ruleengine returns if the message failed
-							if(failedMode != 0 && ruleEngine.getRuleGroupsStatus(failedMode))
-							{
-								failedMessage = true;
-							}
-							// if failedMode is equal to 0, then the user specifies the minimum number
-							// of groups that must have failed to regard the data as failed
-							else if(failedMode == 0 && ruleEngine.getRuleGroupsMinimumNumberFailed(minimumFailedNumberOfGroups)) 
-							{
-								failedMessage = true;
-							}
-							
-							// failed messages
-							if(failedMessage)
-							{
-								// if an output topic for failed messages is defined and we don't drop failed messages
-								// send message to failed topic
-								if(!dropFailedMessages && outputToFailedTopic)
+								// label for the ruleengine. used for assigning a unique label to each record
+								// this is useful when outputting the detailed results.
+								String label = KafkaRuleEngine.getLabel(record.key(), counter);
+								
+								// run the ruleengine to apply logic and execute actions
+								ruleEngine.run(label, collection);
+	
+								// if a field to count on is defined increase counter if the field value has not changed
+								// or otherwise reset counter
+								if(fieldNameToCountOn!=null)
 								{
-									// send the message to the target topic for failed messages
-									Object outputMessage = getOutputMessage(collection, kafkaTopicFailed);
-									sendFailedTargetTopicMessage(kafkaProducerFailed, record.key(), outputMessage);
+									counterFieldnameCurrentValue = collection.getFieldValue(fieldNameToCountOn).toString();
+									increaseCounterFieldname(counterFieldnameCurrentValue);
 								}
-								// if output topic for failed messages is undefined and we don't drop failed messages
-								// send message to the target topic
-								else if(!dropFailedMessages && !outputToFailedTopic)
+								
+								// write value of the field to count on, the counter and the kafka offset to the log
+								if(fieldNameToCountOn!=null && counter % fieldNameToCountOnLoggingInterval == 0)
 								{
-									// send the message to the target topic
+									logger.info(Constants.LOG_LEVEL_SUBTYPE_METRICS + "source_topic=" + kafkaTopicSource + " target_topic=" + kafkaTopicTarget + " field=" + fieldNameToCountOn + " field_value=" + counterFieldnameValue + " counter=" + counterFieldname + " offset=" + lastOffset);
+									fieldNameCounterWrittenToLog = true;
+								}
+								else
+								{
+									// indicator that the counter value was not written to the log yet
+									fieldNameCounterWrittenToLog = false;
+								}
+								
+								// check if according to the settings the message has a ruleengine 
+								// status of failed
+								boolean failedMessage = false;
+								
+								// depending on the selected mode (PROPERTY_RULEENGINE_FAILED_MODE), the ruleengine returns if the message failed
+								if(failedMode != 0 && ruleEngine.getRuleGroupsStatus(failedMode))
+								{
+									failedMessage = true;
+								}
+								// if failedMode is equal to 0, then the user specifies the minimum number
+								// of groups that must have failed to regard the data as failed
+								else if(failedMode == 0 && ruleEngine.getRuleGroupsMinimumNumberFailed(minimumFailedNumberOfGroups)) 
+								{
+									failedMessage = true;
+								}
+								
+								// failed messages
+								if(failedMessage)
+								{
+									// if an output topic for failed messages is defined and we don't drop failed messages
+									// send message to failed topic
+									if(!dropFailedMessages && outputToFailedTopic)
+									{
+										// send the message to the target topic for failed messages
+										Object outputMessage = getOutputMessage(collection, kafkaTopicFailed);
+										sendFailedTargetTopicMessage(kafkaProducerFailed, record.key(), outputMessage);
+									}
+									// if output topic for failed messages is undefined and we don't drop failed messages
+									// send message to the target topic
+									else if(!dropFailedMessages && !outputToFailedTopic)
+									{
+										// send the message to the target topic
+										Object outputMessage = getOutputMessage(collection, kafkaTopicTarget);
+										sendTargetTopicMessage(kafkaProducer, record.key(), outputMessage);
+									}
+								}
+								// passed messages
+								else
+								{
+									// all passed messages go to the target topic
 									Object outputMessage = getOutputMessage(collection, kafkaTopicTarget);
 									sendTargetTopicMessage(kafkaProducer, record.key(), outputMessage);
 								}
+								
+								// send the rule execution details as message(s) to the logging topic, if one is defined.
+								// if no logging topic is defined, then no execution details will be generated 
+								// (when ruleEngine.setPreserveRuleExcecutionResults() is set to "false")
+								if(ruleEngine.getPreserveRuleExcecutionResults())
+								{
+									Object outputMessage = getOutputMessage(collection, kafkaTopicLogging);
+									sendLoggingTargetTopicMessage(kafkaProducerLogging, record.key(), outputMessage, ruleEngine.getGroups());
+								}
+								
+								// clear the collection of details/results otherwise results accumulate
+								// this also clears the counters of passed and failed groups and others
+								ruleEngine.getRuleExecutionCollection().clear();
 							}
-							// passed messages
-							else
-							{
-								// all passed messages go to the target topic
-								Object outputMessage = getOutputMessage(collection, kafkaTopicTarget);
-								sendTargetTopicMessage(kafkaProducer, record.key(), outputMessage);
-							}
-							
-							// send the rule execution details as message(s) to the logging topic, if one is defined.
-							// if no logging topic is defined, then no execution details will be generated 
-							// (when ruleEngine.setPreserveRuleExcecutionResults() is set to "false")
-							if(ruleEngine.getPreserveRuleExcecutionResults())
-							{
-								Object outputMessage = getOutputMessage(collection, kafkaTopicLogging);
-								sendLoggingTargetTopicMessage(kafkaProducerLogging, record.key(), outputMessage, ruleEngine.getGroups());
-							}
-							
-							// clear the collection of details/results otherwise results accumulate
-							// this also clears the counters of passed and failed groups and others
-							ruleEngine.getRuleExecutionCollection().clear();
 
 						}
 						// if we have a parsing problem with the JSON message, we log this and continue processing
@@ -379,20 +389,20 @@ public class RuleEngineConsumerProducer implements Runnable
 						{
 							logger.error(Constants.LOG_LEVEL_SUBTYPE_KAFKA + "server refused certificate or other SSL protocol exception");
 							logger.error(Constants.LOG_LEVEL_SUBTYPE_KAFKA + sslex.getMessage());
-							logger.error(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "end of programe");
+							logger.error(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "end of program because of errors");
 							keepRunning=false;
 						}
 						// if we have any other exception we log this and STOP processing
 						catch(Exception ex)
 						{
 							logger.error(Constants.LOG_LEVEL_SUBTYPE_GENERAL + ex.getMessage());
-							logger.error(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "end of program");
+							logger.error(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "end of program because of errors");
 							keepRunning=false;
 						}
 					}
 					
 					// write field counter to log (once), if time passed and no record was received
-					if(elapsedTimeSinceLastRecord > fieldNameToCountOnLoggingIdleTime && fieldNameCounterWrittenToLog==false)
+					if(fieldNameToCountOn!=null && elapsedTimeSinceLastRecord > fieldNameToCountOnLoggingIdleTime && fieldNameCounterWrittenToLog==false)
 					{
 						logger.info(Constants.LOG_LEVEL_SUBTYPE_METRICS + "source_topic=" + kafkaTopicSource + " target_topic=" + kafkaTopicTarget + " field=" + fieldNameToCountOn + " field_value=" + counterFieldnameValue + " counter=" + counterFieldname + " offset=" + lastOffset);
 						fieldNameCounterWrittenToLog = true;					

@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 
@@ -36,6 +37,7 @@ import com.datamelt.rules.core.ReferenceField;
 import com.datamelt.rules.engine.BusinessRulesEngine;
 import com.datamelt.kafka.util.Constants;
 import com.datamelt.kafka.util.SchemaRegistryUtility;
+import com.datamelt.util.FieldNotFoundException;
 import com.datamelt.util.RowField;
 import com.datamelt.util.RowFieldCollection;
 
@@ -59,6 +61,7 @@ import com.datamelt.util.RowFieldCollection;
 public class KafkaRuleEngine
 {
 	private static ArrayList<ReferenceField> ruleEngineProjectFileReferenceFields;
+	private static HashSet<String> messageFields 									= new HashSet<>();
 	private static Properties properties 									 		= new Properties();
 	private static String propertiesFilename;
 	private static String propertiesFilenameConsumer;
@@ -154,7 +157,6 @@ public class KafkaRuleEngine
 					logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "kafka target topic: [" + getProperty(Constants.PROPERTY_KAFKA_TOPIC_TARGET) + "]");
 					logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "kafka failed topic: [" + failedTopic + "]");
 					logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "kafka detailed logging topic: [" + loggingTopic + "]");
-					logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "");
 				
 					// check if we can get a list of topics from the brokers. if not, then the brokers are probably not available
 					boolean consumerCanListTopics = consumerCanListTopics(kafkaConsumerProperties);
@@ -218,7 +220,7 @@ public class KafkaRuleEngine
 								}
 							}
 							
-							// if the source format is avro
+							// if the output format is avro
 							if(getProperty(Constants.PROPERTY_KAFKA_TOPIC_OUTPUT_FORMAT)!=null && !getProperty(Constants.PROPERTY_KAFKA_TOPIC_OUTPUT_FORMAT).trim().equals("") && getProperty(Constants.PROPERTY_KAFKA_TOPIC_OUTPUT_FORMAT).equals(Constants.MESSAGE_FORMAT_AVRO))
 							{
 								getRegistrySchemas();
@@ -387,6 +389,8 @@ public class KafkaRuleEngine
 	 * these fields will be added to the rowfield collection and subsequently also to the output
 	 * to the target topic.
 	 * 
+	 * note: java type BigDecimal is not supported by avro schemas. 
+	 * 
 	 * these additional fields are initialized to the following default values:
 	 *  - String to an empty string
 	 *  - Date to null
@@ -399,19 +403,24 @@ public class KafkaRuleEngine
 	 *  
 	 * @param referenceFields	ArrayList of reference fields
 	 * @param collection		collection of row fields
+	 * @return				    indicator if all fields have been processed without errors	 
 	 */
-	public static void addReferenceFields(ArrayList <ReferenceField>referenceFields, RowFieldCollection collection)
+	public static boolean addReferenceFields(ArrayList <ReferenceField>referenceFields, RowFieldCollection collection)
 	{
-		// ruleEngineProjectFileReferenceFields contains a list of fields, that are additionally required by the ruleengine.
+		// ruleEngineProjectFileReferenceFields contains a list of fields, that are defined in the rules project file.
 		// these are fields that are created using one or more rulegroup action(s). This list is the same for all data rows.
-		// but we have to find out which fields are additional to the fields that are already existing in the rowfield collection.
+		// but we check here which fields are additional to the fields of the message (collection).
 		//
 		// if we have not initialized the list of ruleEngineProjectFileReferenceFields then initialize it and determine which
 		// fields have to be added to the data row.
 		//
 		// this is done on the first message only. subsequent messages will use the already processed list of fields - for better
 		// performance.
+	
+		// indicator if all fields have been processed without errors
+		int numberOfErrors = 0;
 		
+		// only on the first message
 		if(ruleEngineProjectFileReferenceFields==null)
 		{
 			// initialize the list
@@ -419,7 +428,7 @@ public class KafkaRuleEngine
 			
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "determining additional reference fields from project zip file");
 			
-			// loop over all reference fields
+			// loop over all reference fields as defined in the project zip file
 			for(int i=0;i<referenceFields.size();i++)
 			{
 				ReferenceField referenceField = referenceFields.get(i);
@@ -437,31 +446,58 @@ public class KafkaRuleEngine
 					// add the field to the list
 					ruleEngineProjectFileReferenceFields.add(referenceField);
 				}
+				else
+				{
+					// add field name to the list of known fields
+					messageFields.add(referenceField.getName());
+				}
 			}
 			
+			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of message fields: [" + collection.getNumberOfFields() + "]");
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of additional reference fields: [" + ruleEngineProjectFileReferenceFields.size() + "]");
 		}
 
-		// add the additionally required reference fields as rowfields to the collection
-		for(int i=0;i<ruleEngineProjectFileReferenceFields.size();i++)
+		for(int i=0;i<collection.getNumberOfFields();i++)
 		{
-			ReferenceField referenceField = ruleEngineProjectFileReferenceFields.get(i);
-			
-			// set the default value according to the data type of the reference field.
-			// if an exception occurs, then the data type is invalid. in this case we do not
-			// set the value of the row field at all
 			try
 			{
-				Object value = setDefaultValue(referenceField.getJavaTypeId());
-				collection.addField(new RowField(referenceField.getName(),value));
+				if(!messageFields.contains(collection.getField(i).getName()))
+				{
+					logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "a field was detected that was not defined in the first message that was processed:: [" + collection.getField(i).getName() + "]");
+					numberOfErrors++;
+				}
 			}
-			// in this case create a rowfield without a value
-			catch(Exception ex)
+			catch(Exception fnfe)
 			{
-				logger.warn(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "invalid data type for field: [" + referenceField.getName() + "] - type: [" + referenceField.getJavaTypeId() + "]");
-				collection.addField(new RowField(referenceField.getName()));
+				logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "error retrieving fieldname from rowfield collection for field: [" + i + "]");
+				numberOfErrors++;
 			}
 		}
+		
+		if(numberOfErrors==0)
+		{
+			// add the fields that are NOT part of the message as rowfields to the collection
+			for(int i=0;i<ruleEngineProjectFileReferenceFields.size();i++)
+			{
+				ReferenceField referenceField = ruleEngineProjectFileReferenceFields.get(i);
+				
+				// set the default value according to the data type of the reference field.
+				// if an exception occurs, then the data type is invalid. in this case we do not
+				// set the value of the row field at all
+				try
+				{
+					Object value = setDefaultValue(referenceField.getJavaTypeId());
+					collection.addField(new RowField(referenceField.getName(),value));
+				}
+				// in this case create a rowfield without a value
+				catch(Exception ex)
+				{
+					logger.warn(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "invalid data type for field: [" + referenceField.getName() + "] - type: [" + referenceField.getJavaTypeId() + "]");
+					collection.addField(new RowField(referenceField.getName()));
+				}
+			}
+		}
+		return numberOfErrors==0;
 	}
 
 	/**

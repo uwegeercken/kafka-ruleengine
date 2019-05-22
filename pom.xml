@@ -16,7 +16,14 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-		<lib.jare.version>0.84-SNAPSHOT</lib.jare.version>
+	<docker.plugin.version>0.30.0</docker.plugin.version>
+	<docker.image.dir>${project.basedir}/src/main/docker</docker.image.dir>
+	<!-- this is the Nexus URL for artifacts -->
+        <docker.image.name>localhost:8083/${project.name}</docker.image.name>
+        <docker.image.tag>${project.version}</docker.image.tag>
+        <docker.host>unix:///var/run/docker.sock</docker.host>
+        
+	<lib.jare.version>0.84-SNAPSHOT</lib.jare.version>
         <lib.velocity.version>1.7</lib.velocity.version>
         <lib.avro.version>1.8.2</lib.avro.version>
         <lib.jongo.version>1.4.0</lib.jongo.version>
@@ -142,6 +149,39 @@
                     <show>private</show>
                     <nohelp>true</nohelp>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker.plugin.version}</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>${docker.image.name}</name>
+                            <build>
+                                <tags>
+                                    <tag>${docker.image.tag}</tag>
+                                </tags>
+
+                                <assembly>
+                                    <descriptor>docker-assembly.xml</descriptor>
+                                </assembly>
+
+                                <dockerFileDir>${project.basedir}/src/main/docker/</dockerFileDir>
+                                <filter>@</filter>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>docker-package</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
