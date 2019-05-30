@@ -298,7 +298,6 @@ public class RuleEngineConsumerProducer implements Runnable
 								
 								// run the ruleengine to apply logic and execute actions
 								ruleEngine.run(label, collection);
-	
 								// if a field to count on is defined increase counter if the field value has not changed
 								// or otherwise reset counter
 								if(fieldNameToCountOn!=null)

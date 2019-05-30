@@ -60,8 +60,9 @@ import com.datamelt.util.RowFieldCollection;
  */
 public class KafkaRuleEngine
 {
-	private static ArrayList<ReferenceField> ruleEngineProjectFileReferenceFields;
-	private static HashSet<String> messageFields 									= new HashSet<>();
+	private static HashSet<String> referenceFieldsAvailableInReferenceFileOnly;
+	private static ArrayList<ReferenceField> referenceFieldsAvailableInReferenceFileOnlyList;
+	private static HashSet<String> referenceFieldsAvailableInMessage 				= new HashSet<>();
 	private static Properties properties 									 		= new Properties();
 	private static String propertiesFilename;
 	private static String propertiesFilenameConsumer;
@@ -421,14 +422,16 @@ public class KafkaRuleEngine
 		int numberOfErrors = 0;
 		
 		// only on the first message
-		if(ruleEngineProjectFileReferenceFields==null)
+		if(referenceFieldsAvailableInReferenceFileOnly==null)
 		{
 			// initialize the list
-			ruleEngineProjectFileReferenceFields = new ArrayList<ReferenceField>();
+			referenceFieldsAvailableInReferenceFileOnly = new HashSet<String>();
+			referenceFieldsAvailableInReferenceFileOnlyList = new ArrayList<ReferenceField>();
 			
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "determining additional reference fields from project zip file");
 			
-			// loop over all reference fields as defined in the project zip file
+			// loop over all reference fields as defined in the project zip file and check if
+			// any of the fields are part of the message
 			for(int i=0;i<referenceFields.size();i++)
 			{
 				ReferenceField referenceField = referenceFields.get(i);
@@ -441,35 +444,39 @@ public class KafkaRuleEngine
 				
 				// check if the field already exists in the data row
 				boolean existField = collection.existField(referenceField.getName());
+				// if not, add the field to the list
 				if(!existField)
 				{
-					// add the field to the list
-					ruleEngineProjectFileReferenceFields.add(referenceField);
+					referenceFieldsAvailableInReferenceFileOnly.add(referenceField.getName());
+					referenceFieldsAvailableInReferenceFileOnlyList.add(referenceField);
 				}
 				else
 				{
-					// add field name to the list of known fields
-					messageFields.add(referenceField.getName());
+					referenceFieldsAvailableInMessage.add(referenceField.getName());
 				}
 			}
 			
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of message fields: [" + collection.getNumberOfFields() + "]");
-			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of additional reference fields: [" + ruleEngineProjectFileReferenceFields.size() + "]");
+			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of fields in reference file from message: [" + referenceFieldsAvailableInMessage.size() + "]");
+			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of fields in reference file only: [" + referenceFieldsAvailableInReferenceFileOnly.size() + "]");
 		}
 
-		for(int i=0;i<collection.getNumberOfFields();i++)
+		// we check on each message if the fields required by the ruleengine as determined
+		// from the reference fields and on the first message, are present in the current message
+		for(String fieldName : referenceFieldsAvailableInMessage)
 		{
-			try
+			if(!collection.existField(fieldName))
 			{
-				if(!messageFields.contains(collection.getField(i).getName()))
-				{
-					logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "a field was detected that was not defined in the first message that was processed:: [" + collection.getField(i).getName() + "]");
-					numberOfErrors++;
-				}
+				logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "a field is missing that was present in the first message that was processed: [" + fieldName + "]");
+				numberOfErrors++;
 			}
-			catch(Exception fnfe)
+		}
+		
+		for(String fieldName : referenceFieldsAvailableInReferenceFileOnly)
+		{
+			if(collection.existField(fieldName))
 			{
-				logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "error retrieving fieldname from rowfield collection for field: [" + i + "]");
+				logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "a field is present that was not present in the first message that was processed: [" + fieldName + "]");
 				numberOfErrors++;
 			}
 		}
@@ -477,9 +484,9 @@ public class KafkaRuleEngine
 		if(numberOfErrors==0)
 		{
 			// add the fields that are NOT part of the message as rowfields to the collection
-			for(int i=0;i<ruleEngineProjectFileReferenceFields.size();i++)
+			for(int i=0;i<referenceFieldsAvailableInReferenceFileOnlyList.size();i++)
 			{
-				ReferenceField referenceField = ruleEngineProjectFileReferenceFields.get(i);
+				ReferenceField referenceField = referenceFieldsAvailableInReferenceFileOnlyList.get(i);
 				
 				// set the default value according to the data type of the reference field.
 				// if an exception occurs, then the data type is invalid. in this case we do not
@@ -507,7 +514,8 @@ public class KafkaRuleEngine
 	 * @param fieldType		the data type of the reference field 
 	 * @return				the default value for the relevant data type
 	 * @throws Exception	exception if the field taype is invalid
-	 */	private static Object setDefaultValue(long fieldType) throws Exception
+	 */	
+	private static Object setDefaultValue(long fieldType) throws Exception
 	{
 		if(fieldType == ReferenceField.FIELD_TYPE_ID_STRING)
 		{
