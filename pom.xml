@@ -4,7 +4,7 @@
 
   <groupId>com.datamelt.kafka</groupId>
   <artifactId>kafka-ruleengine</artifactId>
-  <version>0.8.3-SNAPSHOT</version>
+  <version>0.8.4-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>kafka-ruleengine</name>

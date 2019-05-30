@@ -55,7 +55,7 @@ import com.datamelt.util.RowFieldCollection;
  * deserializer/serializer in the configuration for the kafka consumer and producer. 
  * 
  * 
- * @author uwe geercken - 2019-05-12
+ * @author uwe geercken - 2019-05-30
  *
  */
 public class KafkaRuleEngine
@@ -426,9 +426,11 @@ public class KafkaRuleEngine
 		{
 			// initialize the list
 			referenceFieldsAvailableInReferenceFileOnly = new HashSet<String>();
+			
+			// initialize the list which is appended to all of the messages
 			referenceFieldsAvailableInReferenceFileOnlyList = new ArrayList<ReferenceField>();
 			
-			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "determining additional reference fields from project zip file");
+			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "determining reference fields from project zip file not present in the message");
 			
 			// loop over all reference fields as defined in the project zip file and check if
 			// any of the fields are part of the message
@@ -457,30 +459,39 @@ public class KafkaRuleEngine
 			}
 			
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of message fields: [" + collection.getNumberOfFields() + "]");
+			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of fields in reference file: [" + referenceFields.size() + "]");
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of fields in reference file from message: [" + referenceFieldsAvailableInMessage.size() + "]");
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "number of fields in reference file only: [" + referenceFieldsAvailableInReferenceFileOnly.size() + "]");
 		}
 
-		// we check on each message if the fields required by the ruleengine as determined
-		// from the reference fields and on the first message, are present in the current message
-		for(String fieldName : referenceFieldsAvailableInMessage)
+		// only if debugging - for performance reasons
+		if(logger.isDebugEnabled())
 		{
-			if(!collection.existField(fieldName))
+			// we check on each message if the fields required by the ruleengine as determined
+			// from the reference fields and on the first message, are present in the current message
+			for(String fieldName : referenceFieldsAvailableInMessage)
 			{
-				logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "a field is missing that was present in the first message that was processed: [" + fieldName + "]");
-				numberOfErrors++;
+				if(!collection.existField(fieldName))
+				{
+					logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "field missing that was present in the first message that was processed: [" + fieldName + "]");
+					numberOfErrors++;
+				}
 			}
+			
+			// check if the message - the number of fields - have changed. this could lead to
+			// missing fields that the ruleengine requires
+			for(String fieldName : referenceFieldsAvailableInReferenceFileOnly)
+			{
+				if(collection.existField(fieldName))
+				{
+					logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "field present that was not present in the first message that was processed: [" + fieldName + "]");
+					numberOfErrors++;
+				}
+			}
+
 		}
 		
-		for(String fieldName : referenceFieldsAvailableInReferenceFileOnly)
-		{
-			if(collection.existField(fieldName))
-			{
-				logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "a field is present that was not present in the first message that was processed: [" + fieldName + "]");
-				numberOfErrors++;
-			}
-		}
-		
+		// only we we found no errors. debug mode must be enables to check this!
 		if(numberOfErrors==0)
 		{
 			// add the fields that are NOT part of the message as rowfields to the collection
