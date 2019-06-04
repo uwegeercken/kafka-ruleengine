@@ -103,6 +103,9 @@ public class KafkaRuleEngine
 			logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "Start of KafkaRuleEngine program...");
 			logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "Program version: " + getVersionAndLastUpdate());
 			logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "JaRE RuleEngine version: " + getRuleEngineVersionAndLastUpdate());
+			logger.info(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "loglevel: " + logger.getEffectiveLevel());
+			
+			
 			
 			boolean zipFileAccessible = checkFileAccessible(ruleEngineZipFilename);
 			boolean propertiesFileAccessible = checkFileAccessible(propertiesFilename);
