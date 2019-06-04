@@ -25,7 +25,7 @@ import java.math.BigDecimal;
  * Defines constants for the KafkaRuleEngine service/program.
  * 
  * 
- * @author uwe.geercken@web.de - 2019-05-04
+ * @author uwe.geercken@web.de - 2019-06-04
  *
  */
 public class Constants
@@ -117,8 +117,8 @@ public class Constants
     public static final int RULEENGINE_OUTPUT_MODE_PASSED_GROUPS					= 1;
     public static final int RULEENGINE_OUTPUT_MODE_FAILED_GROUPS					= 2;
     
-    public static final String VERSION_NUMBER								 		= "0.8.1";
-    public static final String LAST_UPDATE									 		= "2019-05-12";
+    public static final String VERSION_NUMBER								 		= "0.8.6";
+    public static final String LAST_UPDATE									 		= "2019-06-04";
 	
 
 

@@ -4,7 +4,7 @@
 
   <groupId>com.datamelt.kafka</groupId>
   <artifactId>kafka-ruleengine</artifactId>
-  <version>0.8.4-SNAPSHOT</version>
+  <version>0.8.6-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>kafka-ruleengine</name>
@@ -26,7 +26,6 @@
 	<lib.jare.version>0.87-SNAPSHOT</lib.jare.version>
         <lib.velocity.version>1.7</lib.velocity.version>
         <lib.avro.version>1.8.2</lib.avro.version>
-        <lib.jongo.version>1.4.0</lib.jongo.version>
         <lib.junit.version>3.8.1</lib.junit.version>
         <lib.slf4j.version>1.7.26</lib.slf4j.version>
         <lib.log4j.version>1.2.17</lib.log4j.version>
@@ -63,13 +62,6 @@
             <artifactId>avro</artifactId>
             <version>${lib.avro.version}</version>
 		</dependency> 
-
-		<!-- https://mvnrepository.com/artifact/org.jongo/jongo -->
-		<dependency>
-		    <groupId>org.jongo</groupId>
-		    <artifactId>jongo</artifactId>
-		    <version>${lib.jongo.version}</version>
-		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
 		<dependency>
