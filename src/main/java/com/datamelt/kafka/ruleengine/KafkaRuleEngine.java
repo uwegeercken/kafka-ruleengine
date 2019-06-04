@@ -37,7 +37,6 @@ import com.datamelt.rules.core.ReferenceField;
 import com.datamelt.rules.engine.BusinessRulesEngine;
 import com.datamelt.kafka.util.Constants;
 import com.datamelt.kafka.util.SchemaRegistryUtility;
-import com.datamelt.util.FieldNotFoundException;
 import com.datamelt.util.RowField;
 import com.datamelt.util.RowFieldCollection;
 
