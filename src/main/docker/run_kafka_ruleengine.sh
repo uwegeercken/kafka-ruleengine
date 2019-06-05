@@ -7,10 +7,10 @@
 # target topic. Additonally a topic may be specified to output the
 # detailed results of the ruleengine execution.
 #
-# mandatory: pass the path and name of the ruleengine project zip file as the first parameter
-# optional:  pass the path and name of the ruleengine properties file as the second parameter. default is: same folder as script.
-# optional:  pass the path and name of the kafka consumer properties file as the third parameter. default is: same folder as script.
-# optional:  pass the path and name of the kafka producer properties file as the fourth parameter. default is: same folder as script.
+# pass the path and name of the ruleengine project zip file as the first parameter
+# pass the path and name of the ruleengine properties file as the second parameter. default is: same folder as script.
+# pass the path and name of the kafka consumer properties file as the third parameter. default is: same folder as script.
+# pass the path and name of the kafka producer properties file as the fourth parameter. default is: same folder as script.
 #
 # last update: uwe.geercken@web.de - 2019-05-04
 

@@ -41,20 +41,20 @@ import com.datamelt.util.RowField;
 import com.datamelt.util.RowFieldCollection;
 
 /**
- * Reads JSON or CSV formatted data from a Kafka topic, runs business rules (logic) on the data and
+ * Reads JSON, AVRO or CSV formatted data from a Kafka topic, runs business rules (logic) on the data and
  * outputs the resulting data to a Kafka target topic.
  * 
  * Optionally the detailed results of the execution of the ruleengine may be ouput to a defined
  * topic for logging purposes. In this case the topic will contain one output message for each
  * input message and rule. E.g. if there are 10 rules in the ruleengine project file, then for any
- * received input message, 10 output messages are generated.
+ * received input message, 10 output messages are generated to the detailed results topic.
  * 
  * The source topic data is expected to be in Avro, JSON or CSV format. Output will be in JSON or Avro format.
  * This can be configured in the kafka_ruleengine.properties file and by specifying the appropriate value
- * deserializer/serializer in the configuration for the kafka consumer and producer. 
+ * deserializer/serializer in the configuration for the Kafka consumer and producer. 
  * 
  * 
- * @author uwe geercken - 2019-05-30
+ * @author uwe geercken - 2019-06-05
  *
  */
 public class KafkaRuleEngine
@@ -284,20 +284,22 @@ public class KafkaRuleEngine
     	System.out.println("Additionally an optional topic for logging may be specified which will contain the detailed");
     	System.out.println("results of the execution of each of the individual rules and the message itself.");
     	System.out.println();
+    	System.out.println("Logging is done using log4j. The log level and other settings can be set in the log4j.properties file");
+    	System.out.println();
     	System.out.println("The Apache Kafka source topic messages must be in Avro, JSON or CSV format. Output will always be in JSON format");
     	System.out.println();
-    	System.out.println("Four files must be specified, defining various properties for the program, Kafka and the Ruleengine project zip file.");
+    	System.out.println("Four files must be specified, defining various properties for the program, Kafka and the ruleengine project zip file.");
     	System.out.println();
-    	System.out.println("KafkaRuleEngine [ruleengine properties file] [kafka consumer properties file] [kafka producer properties file]");
+    	System.out.println("KafkaRuleEngine [ruleengine properties file] [kafka consumer properties file] [kafka producer properties file] [rule engine project file]");
     	System.out.println("where [ruleengine properties file]     : required. path and name of the ruleengine properties file");
     	System.out.println("      [kafka consumer properties file] : required. path and name of the kafka consumer properties file");
     	System.out.println("      [kafka producer properties file] : required. path and name of the kafka producer properties file");
-    	System.out.println("      [rule engine project file]       : required. path and name of the rule engine project file");
+    	System.out.println("      [rule engine project file]       : required. path and name of the rule engine project zip file");
     	System.out.println();
     	System.out.println("example: KafkaRuleEngine /home/test/kafka_ruleengine.properties /home/test/kafka_consumer.properties /home/test/kafka_producer.properties /home/test/my_project_file.zip");
     	System.out.println();
     	System.out.println("published as open source under the Apache License. read the licence notice.");
-    	System.out.println("utilizes the Java Rule Engine - JaRE - to apply business rules and actions to the data.");
+    	System.out.println("utilizes the Java Rule Engine - JaRE - to apply business rules and actions to update the data.");
     	System.out.println("check https://github.com/uwegeercken for source code, documentation and samples.");
     	System.out.println("all code by uwe geercken, 2017-2019. uwe.geercken@web.de");
     	System.out.println();
@@ -493,7 +495,9 @@ public class KafkaRuleEngine
 
 		}
 		
-		// only we we found no errors. debug mode must be enables to check this!
+		// only if we found no errors. here we check if the messages all have the same fields.
+		// debug mode must be enables to check this! otherwise this is bypassed for better
+		// performance.
 		if(numberOfErrors==0)
 		{
 			// add the fields that are NOT part of the message as rowfields to the collection
