@@ -32,17 +32,21 @@ If a topic for detailed result logging is defined then all detailed results of e
 topic. For each input message and rule one output message to the logging topic is generated. So if you have
 10 input messages and 5 rules, then 50 messages are generated to the logging topic.
 
+There is a properties file for the kafka consumer and one for the kafka producer configuration. These are passed to
+the consumer and producer and you may add additional configuration settings as you wish to these files.
+
 There are two modes possible with the ruleengine:
 
 1) Update only mode: Define the output topic, don't define the failed topic. All input messages will be processed.
 The rule logic will define which records are updated (using actions) and which not. And then all messages are
-sent to the output topic. 
+sent to the output topic. You can also use the ruleengine to mark a certain message/row as passed or failed by
+using an action when you e.g. want to further process the data at a later point in the process.
 
 2) Check data mode: Define the output topic and define the failed topic. All input messages will be processed.
 A single message will need to pass all rulegroups (or the defined number configured). If it does, it is sent to the
 output topic only, if not is is sent to the failed topic only. So this mode checks if all logic (based on the rulegroups)
-that are defined is correct for each record. This means the messages are divided into "failed" and "passed" messages.
-See also the note below.
+that are defined is correct for each record. This means the messages are divided into "failed" and "passed" messages. SO
+this is a way to filter the data. See also the note below.
 
 In any case you may define or not define a topic for logging where the detailed results of the execution of the
 ruleengine are sent. I gives detailed information on why a certain message failed or not and which rule was used to check
@@ -54,7 +58,7 @@ other checks if the age is greater or equal to 50. The rules are connected using
 person at the age of 40, the first rule will pass and the other one will fail. But the rulegroup in which both rules
 are collected, will pass (because the rules are connected using an "or" condition).
 
-You may also define subgroups in rulegroups which allow grouping of rules and then the subgroups are connected using
+You may also define subgroups within rulegroups, which allow grouping of rules and then the subgroups are connected using
 an "and" or "or" condition. This way you have the required flexibility to compose complex logic.
 
 The KafkaRuleEngine service logs the number of messages consumed from Kafka - if defined in the properties file. A field
@@ -65,7 +69,7 @@ This can be helpful if you have a field with e.g. a batch-id. Where all messages
 in the field. When the value of the field changes, we know we have a new batch run. In this case the counter for the field is
 reset to zero.
 The log entries (with the value of the defined field and the counter) then can be parsed and sent to a log analyzer like
-Elasticsearch to capture and visualize the processed messages for the given batch-id.
+Logstash (and then to Elasticsearch) to capture and visualize the processed messages for the given batch-id.
 
 Please send your feedback and help to enhance the tool.
 
@@ -94,5 +98,5 @@ uwe geercken
 email: uwe.geercken@web.de
 twitter: uweeegeee
 
-last update: 2019-05-30
+last update: 2019-06-08
 
