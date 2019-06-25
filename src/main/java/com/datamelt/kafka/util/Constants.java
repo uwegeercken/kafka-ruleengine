@@ -46,7 +46,6 @@ public class Constants
 	public static final String PROPERTY_RULEENGINE_ZIP_FILE_CHECK_INTERVAL			= "ruleengine.check.modified.file.interval";
 	public static final String PROPERTY_KAFKA_MESSAGE_FORMAT						= "kafka.topic.source.format";
 	public static final String PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_CSV_FIELDS		= "kafka.topic.source.format.csv.fields";
-	public static final String PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_AVRO_SCHEMA_NAME	= "kafka.topic.source.format.avro.schema.name";
 	public static final String PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_CSV_SEPARATOR		= "kafka.topic.source.format.csv.value.separator";
 	public static final String PROPERTY_KAFKA_TOPIC_EXCLUDE_FIELDS					= "kafka.topic.exclude.fields";
 	public static final String PROPERTY_KAFKA_TOPIC_MESSAGE_COUNTER_FIELDNAME		= "kafka.topic.message.counter.fieldname";
@@ -116,8 +115,8 @@ public class Constants
     public static final int RULEENGINE_OUTPUT_MODE_PASSED_GROUPS					= 1;
     public static final int RULEENGINE_OUTPUT_MODE_FAILED_GROUPS					= 2;
     
-    public static final String VERSION_NUMBER								 		= "0.8.6";
-    public static final String LAST_UPDATE									 		= "2019-06-04";
+    public static final String VERSION_NUMBER								 		= "0.8.7";
+    public static final String LAST_UPDATE									 		= "2019-06-25";
 	
 
 

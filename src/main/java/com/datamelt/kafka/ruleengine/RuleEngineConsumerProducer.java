@@ -67,8 +67,6 @@ public class RuleEngineConsumerProducer implements Runnable
 	private String kafkaTopicOutputFormat							 = Constants.DEFAULT_KAFKA_TOPIC_OUTPUT_FORMAT;
 	private String kafkaTopicSourceFormatCsvFields;
 	private String kafkaTopicSourceFormatCsvSeparator;
-	private String kafkaTopicSourceFormatAvroSchemaName;
-	private Schema avroSchema;
 	private String kafkaTopicSource;
 	private String kafkaTopicTarget;
 	private String kafkaTopicLogging;
@@ -215,7 +213,7 @@ public class RuleEngineConsumerProducer implements Runnable
 					startTime = currentTime;
 					if(errorReloadingProjectZipFile)
 					{
-						logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "no data will be consumed from the kafka because of an error loading the project zip file: [" + ruleEngineZipFile + "]");
+						logger.error(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "no data will be consumed from kafka because of an error loading the project zip file: [" + ruleEngineZipFile + "]");
 					}
 					logger.debug(Constants.LOG_LEVEL_SUBTYPE_RULEENGINE + "checking if project zip file has changed: [" + ruleEngineZipFile + "]");
 					boolean reload = checkFileChanges();
@@ -276,7 +274,6 @@ public class RuleEngineConsumerProducer implements Runnable
 							}
 							else if(kafkaTopicSourceFormat.equals(Constants.MESSAGE_FORMAT_AVRO))
 							{
-								//collection = FormatConverter.convertFromAvroByteArray(avroSchema,(byte[])record.value());
 								collection = FormatConverter.convertFromAvroGenericRecord((GenericRecord)record.value());
 							}
 							
@@ -453,7 +450,7 @@ public class RuleEngineConsumerProducer implements Runnable
 	 * 
 	 * @param kafkaProducer		the kafka producer to use to send the message
 	 * @param recordKey			the key of the kafka message
-	 * @param message			the message as received from the source topic
+	 * @param message			the message to be sent to the output topic
 	 */
 	private void sendTargetTopicMessage(KafkaProducer<String, Object> kafkaProducer, String recordKey, Object message)
 	{
@@ -487,7 +484,7 @@ public class RuleEngineConsumerProducer implements Runnable
 	 * 
 	 * @param kafkaProducerFailed		the kafka producer to use to send the message
 	 * @param recordKey					the key of the kafka message
-	 * @param message					the message as received from the source topic
+	 * @param message					the message to be sent to the output topic
 	 */
 	private void sendFailedTargetTopicMessage(KafkaProducer<String, Object> kafkaProducerFailed, String recordKey, Object message)
 	{
@@ -503,7 +500,7 @@ public class RuleEngineConsumerProducer implements Runnable
 	}
 
 	/**
-	 * method adds the relevant results from the ruleengine execution to the JSON formatted object (message) and
+	 * method adds the relevant results from the ruleengine execution to the JSON or Avro formatted object (message) and
 	 * submits the message to the kafka topic for logging
 	 * 
 	 * for each input message from the source topic and for each rule defined in the ruleengine project file
@@ -515,7 +512,7 @@ public class RuleEngineConsumerProducer implements Runnable
 	 * 
 	 * @param kafkaProducerLogging		producer used for the logging topic
 	 * @param recordKey					key of the kafka source message
-	 * @param message					the kafka source message
+	 * @param message					the message to be sent to the output topic
 	 * @param ruleGroups				reference to the rulegroups of the ruleengine instance
 	 */
 	private void sendLoggingTargetTopicMessage(KafkaProducer<String, Object> kafkaProducerLogging, String recordKey, Object message, ArrayList<RuleGroup> ruleGroups)
@@ -850,26 +847,6 @@ public class RuleEngineConsumerProducer implements Runnable
 	public void setFieldNameToCountOnLoggingIdleTime(long fieldNameToCountOnLoggingIdleTime) 
 	{
 		this.fieldNameToCountOnLoggingIdleTime = fieldNameToCountOnLoggingIdleTime;
-	}
-
-	public String getKafkaTopicSourceFormatAvroSchemaName()
-	{
-		return kafkaTopicSourceFormatAvroSchemaName;
-	}
-
-	public void setKafkaTopicSourceFormatAvroSchemaName(String kafkaTopicSourceFormatAvroSchemaName) 
-	{
-		this.kafkaTopicSourceFormatAvroSchemaName = kafkaTopicSourceFormatAvroSchemaName;
-	}
-
-	public Schema getAvroSchema() 
-	{
-		return avroSchema;
-	}
-
-	public void setAvroSchema(Schema avroSchema) 
-	{
-		this.avroSchema = avroSchema;
 	}
 
 	public String getKafkaTopicOutputFormat() 

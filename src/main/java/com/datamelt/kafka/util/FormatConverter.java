@@ -40,10 +40,10 @@ import com.datamelt.util.RowField;
 import com.datamelt.util.RowFieldCollection;
 
 /**
- * Formats RowFieldCollection to JSON or vice versa.
+ * Formats RowFieldCollection to JSON or Avro and vice versa.
  * 
  * 
- * @author uwe.geercken@web.de - 2019-05-04
+ * @author uwe.geercken@web.de - 2019-06-25
  *
  */
 public class FormatConverter
@@ -174,13 +174,12 @@ public class FormatConverter
 	/**
 	 * returns a collection of fields containing field names and their values from the record
 	 * 
-	 * @param schema 			the AVRO schema corresponding to the message
 	 * @param recordValue		the kafka message value as byte array (in AVRO format) 
 	 * @return					a rowfield collection or null in case of an exception
 	 */
-	public static RowFieldCollection convertFromAvroByteArray(Schema schema,byte[] recordValue)
+	public static RowFieldCollection convertFromAvroByteArray(byte[] recordValue)
 	{
-		GenericRecord record = byteArrayToDatum(schema, recordValue);
+		GenericRecord record = byteArrayToDatum(recordValue);
 		RowFieldCollection rowFieldCollection = null;
 		try
 		{
@@ -203,9 +202,8 @@ public class FormatConverter
 	 * @param byteData	the byte array
 	 * @return			Avro GenericRecord or null in case of an IO exception
 	 */
-	private static GenericRecord byteArrayToDatum(Schema schema, byte[] byteData) 
+	private static GenericRecord byteArrayToDatum(byte[] byteData) 
 	{
-        //GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(schema);
 		GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
         ByteArrayInputStream byteArrayInputStream = null;
         try 

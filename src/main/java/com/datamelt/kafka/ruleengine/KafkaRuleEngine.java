@@ -213,17 +213,7 @@ public class KafkaRuleEngine
 								ruleEngineConsumerProducer.setKafkaTopicSourceFormatCsvSeparator(getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_CSV_SEPARATOR));
 							}
 
-							// if the source format is avro
-							if(getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT)!=null && !getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT).trim().equals("") && getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT).equals(Constants.MESSAGE_FORMAT_AVRO))
-							{
-								if(getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_AVRO_SCHEMA_NAME)!=null && !getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_AVRO_SCHEMA_NAME).trim().equals(""))
-								{
-									ruleEngineConsumerProducer.setAvroSchema(parseAvroSchema(getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_AVRO_SCHEMA_NAME)));
-									ruleEngineConsumerProducer.setKafkaTopicSourceFormatAvroSchemaName(getProperty(Constants.PROPERTY_KAFKA_TOPIC_SOURCE_FORMAT_AVRO_SCHEMA_NAME));
-								}
-							}
-							
-							// if the output format is avro
+							// if the output format is avro we retrieve the schema from the schema registry.
 							if(getProperty(Constants.PROPERTY_KAFKA_TOPIC_OUTPUT_FORMAT)!=null && !getProperty(Constants.PROPERTY_KAFKA_TOPIC_OUTPUT_FORMAT).trim().equals("") && getProperty(Constants.PROPERTY_KAFKA_TOPIC_OUTPUT_FORMAT).equals(Constants.MESSAGE_FORMAT_AVRO))
 							{
 								getRegistrySchemas();
@@ -286,7 +276,8 @@ public class KafkaRuleEngine
     	System.out.println();
     	System.out.println("Logging is done using log4j. The log level and other settings can be set in the log4j.properties file");
     	System.out.println();
-    	System.out.println("The Apache Kafka source topic messages must be in Avro, JSON or CSV format. Output will always be in JSON format");
+    	System.out.println("The Apache Kafka source topic messages must be in Avro, JSON or CSV format. Output will be in JSON or Avro format.");
+    	System.out.println("For output in Avro format the process will look for a schema in the Schema Registry with a name equal to the topic name.");
     	System.out.println();
     	System.out.println("Four files must be specified, defining various properties for the program, Kafka and the ruleengine project zip file.");
     	System.out.println();
@@ -803,7 +794,7 @@ public class KafkaRuleEngine
 	
 	/**
 	 * connects to the schema registry and retrieves the schema text for the configured
-	 * output topics
+	 * output topics.only used for output topics that are in avro format.
 	 * 
 	 * the schema is then parsed into an avro schema and put into a map
 	 */
