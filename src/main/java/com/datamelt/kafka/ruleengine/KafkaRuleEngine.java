@@ -292,7 +292,7 @@ public class KafkaRuleEngine
     	System.out.println("published as open source under the Apache License. read the licence notice.");
     	System.out.println("utilizes the Java Rule Engine - JaRE - to apply business rules and actions to update the data.");
     	System.out.println("check https://github.com/uwegeercken for source code, documentation and samples.");
-    	System.out.println("all code by uwe geercken, 2017-2019. uwe.geercken@web.de");
+    	System.out.println("all code by uwe geercken, 2017-2020. uwe.geercken@web.de");
     	System.out.println();
 	}
 	
