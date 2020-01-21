@@ -54,7 +54,7 @@ import com.datamelt.util.RowFieldCollection;
  * deserializer/serializer in the configuration for the Kafka consumer and producer. 
  * 
  * 
- * @author uwe geercken - 2019-06-05
+ * @author uwe geercken - 2020-01-21
  *
  */
 public class KafkaRuleEngine
