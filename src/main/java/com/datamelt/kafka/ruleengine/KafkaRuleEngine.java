@@ -368,7 +368,6 @@ public class KafkaRuleEngine
 		{
 			logger.debug(Constants.LOG_LEVEL_SUBTYPE_GENERAL + "retrieving list of topics from kafka broker(s)");
 			kafkaConsumer.listTopics();
-			System.out.println();
 			return true;
 		}
 		catch(Exception ex)

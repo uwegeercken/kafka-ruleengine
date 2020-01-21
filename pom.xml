@@ -4,7 +4,7 @@
 
   <groupId>com.datamelt.kafka</groupId>
   <artifactId>kafka-ruleengine</artifactId>
-  <version>0.8.7-SNAPSHOT</version>
+  <version>0.8.8-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>kafka-ruleengine</name>
@@ -23,7 +23,7 @@
         <docker.image.tag>${project.version}</docker.image.tag>
         <docker.host>unix:///var/run/docker.sock</docker.host>
         
-	<lib.jare.version>0.90-SNAPSHOT</lib.jare.version>
+	<lib.jare.version>0.90-SNAPSHOT</lib.jare.version> 
         <lib.velocity.version>1.7</lib.velocity.version>
         <lib.avro.version>1.8.2</lib.avro.version>
         <lib.junit.version>3.8.1</lib.junit.version>
