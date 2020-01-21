@@ -455,20 +455,21 @@ public class RuleEngineConsumerProducer implements Runnable
 	private void sendTargetTopicMessage(KafkaProducer<String, Object> kafkaProducer, String recordKey, Object message)
 	{
 		// send the resulting data to the target topic
-		if(message instanceof JSONObject)
+		try
 		{
-			kafkaProducer.send(new ProducerRecord<String, Object>(kafkaTopicTarget,recordKey, message.toString()));
+
+			if(message instanceof JSONObject)
+			{
+				kafkaProducer.send(new ProducerRecord<String, Object>(kafkaTopicTarget,recordKey, message.toString())).get();
+			}
+			else
+			{
+				kafkaProducer.send(new ProducerRecord<String, Object>(kafkaTopicTarget,recordKey, message)).get();
+			}
 		}
-		else
+		catch(Exception ex)
 		{
-			try
-			{
-				kafkaProducer.send(new ProducerRecord<String, Object>(kafkaTopicTarget,recordKey, message));
-			}
-			catch(Exception ex)
-			{
-				ex.printStackTrace();
-			}
+			logger.error(Constants.LOG_LEVEL_SUBTYPE_KAFKA + "error sending message to target topic. message key: [" + recordKey + "]. error: [" + ex.getMessage() + "]");
 		}
 	}
 
@@ -488,14 +489,21 @@ public class RuleEngineConsumerProducer implements Runnable
 	 */
 	private void sendFailedTargetTopicMessage(KafkaProducer<String, Object> kafkaProducerFailed, String recordKey, Object message)
 	{
-		// send the resulting data to the target topic
-		if(message instanceof JSONObject)
+		// send the resulting data to the failed topic
+		try
 		{
-			kafkaProducerFailed.send(new ProducerRecord<String, Object>(kafkaTopicFailed,recordKey, message.toString()));
+			if(message instanceof JSONObject)
+			{
+				kafkaProducerFailed.send(new ProducerRecord<String, Object>(kafkaTopicFailed,recordKey, message.toString())).get();
+			}
+			else
+			{
+				kafkaProducerFailed.send(new ProducerRecord<String, Object>(kafkaTopicFailed,recordKey, message)).get();
+			}
 		}
-		else
+		catch(Exception ex)
 		{
-			kafkaProducerFailed.send(new ProducerRecord<String, Object>(kafkaTopicFailed,recordKey, message));
+			logger.error(Constants.LOG_LEVEL_SUBTYPE_KAFKA + "error sending message to failed topic. message key: [" + recordKey + "]. error: [" + ex.getMessage() + "]");
 		}
 	}
 
@@ -559,7 +567,14 @@ public class RuleEngineConsumerProducer implements Runnable
     					jsonMessage.put(Constants.RULEENGINE_FIELD_RULE_FAILED, ruleFailed);
     					jsonMessage.put(Constants.RULEENGINE_FIELD_RULE_MESSAGE, ruleMessage);
     					
-    					kafkaProducerLogging.send(new ProducerRecord<String, Object>(kafkaTopicLogging,recordKey, jsonMessage.toString()));
+    					try
+    					{
+    						kafkaProducerLogging.send(new ProducerRecord<String, Object>(kafkaTopicLogging,recordKey, jsonMessage.toString())).get();
+    					}
+    					catch(Exception ex)
+    					{
+    						logger.error(Constants.LOG_LEVEL_SUBTYPE_KAFKA + "error sending message to logging topic. message key: [" + recordKey + "]. error: [" + ex.getMessage() + "]");
+    					}
     				}
     				else if(message instanceof GenericRecord)
     				{
@@ -576,7 +591,14 @@ public class RuleEngineConsumerProducer implements Runnable
     					avroMessage.put(Constants.RULEENGINE_FIELD_RULE_FAILED, ruleFailed);
     					avroMessage.put(Constants.RULEENGINE_FIELD_RULE_MESSAGE, ruleMessage);
     					
-    					kafkaProducerLogging.send(new ProducerRecord<String, Object>(kafkaTopicLogging,recordKey, avroMessage));
+    					try
+    					{
+    						kafkaProducerLogging.send(new ProducerRecord<String, Object>(kafkaTopicLogging,recordKey, avroMessage)).get();
+    					}
+    					catch(Exception ex)
+    					{
+    						logger.error(Constants.LOG_LEVEL_SUBTYPE_KAFKA + "error sending message to logging topic. message key: [" + recordKey + "]. error: [" + ex.getMessage() + "]");
+    					}
     				}
                 }
             }
