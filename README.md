@@ -73,7 +73,7 @@ Logstash (and then to Elasticsearch) to capture and visualize the processed mess
 
 Please send your feedback and help to enhance the tool.
 
-    Copyright (C) 2017-2019  Uwe Geercken
+    Copyright (C) 2017-2020  Uwe Geercken
 
 
  Licensed to the Apache Software Foundation (ASF) under one
@@ -98,5 +98,5 @@ uwe geercken
 email: uwe.geercken@web.de
 twitter: uweeegeee
 
-last update: 2019-06-08
+last update: 2020-03-05
 
