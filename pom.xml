@@ -4,11 +4,10 @@
 
   <groupId>com.datamelt.kafka</groupId>
   <artifactId>kafka-ruleengine</artifactId>
-  <version>0.8.8-SNAPSHOT</version>
+  <version>0.9.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>kafka-ruleengine</name>
-  <url>http://maven.apache.org</url>
 
   <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -19,7 +18,7 @@
 	<docker.plugin.version>0.30.0</docker.plugin.version>
 	<docker.image.dir>${project.basedir}/src/main/docker</docker.image.dir>
 	<!-- this is the Nexus URL for artifacts -->
-        <docker.image.name>localhost:8083/${project.name}</docker.image.name>
+        <docker.image.name>fedboxch:8083/${project.name}</docker.image.name>
         <docker.image.tag>${project.version}</docker.image.tag>
         <docker.host>unix:///var/run/docker.sock</docker.host>
         
@@ -122,12 +121,12 @@
     <repository>
       <id>nexus</id>
       <name>Releases</name>
-      <url>http://localhost:8081/repository/maven-releases</url>
+      <url>http://fedboxch:8081/repository/maven-releases</url>
     </repository>
     <snapshotRepository>
       <id>nexus</id>
       <name>Snapshot</name>
-      <url>http://localhost:8081/repository/maven-snapshots</url>
+      <url>http://fedboxch:8081/repository/maven-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
   
@@ -158,7 +157,6 @@
                                 <assembly>
                                     <descriptor>docker-assembly.xml</descriptor>
                                 </assembly>
-
                                 <dockerFileDir>${project.basedir}/src/main/docker/</dockerFileDir>
                                 <filter>@</filter>
                             </build>
@@ -167,11 +165,11 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>docker-package</id>
+                        <id>docker-build</id>
                         <goals>
                             <goal>build</goal>
                         </goals>
-                        <phase>package</phase>
+                        <phase>install</phase>
                     </execution>
                 </executions>
             </plugin>
